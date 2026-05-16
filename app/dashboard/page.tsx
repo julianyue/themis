@@ -25,7 +25,7 @@ interface Assessment {
     users: string;
     industry: string;
     decisions: string;
-    data: string;
+    data: string[];
   };
   overallRisk: "HIGH" | "MEDIUM" | "LOW";
   riskScore: number;
@@ -34,7 +34,7 @@ interface Assessment {
     severity: "HIGH" | "MEDIUM" | "LOW";
     framework: string;
     issue: string;
-    detail: string;
+    description: string;
   }>;
   regulations: Array<{
     name: string;
@@ -329,7 +329,7 @@ function DashboardContent() {
                           <FrameworkTag framework={flag.framework} />
                         </div>
                         <h3 className="font-medium text-neutral-900 mb-1">{flag.issue}</h3>
-                        <p className="text-sm text-neutral-600">{flag.detail}</p>
+                        <p className="text-sm text-neutral-600">{flag.description}</p>
                       </CardContent>
                     </Card>
                   ))}

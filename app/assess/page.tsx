@@ -63,40 +63,50 @@ function generateSampleAssessment(formData: {
   data: string[];
 }) {
   const id = `assessment-${Date.now()}`;
+  const riskLevel = formData.decisions === "fully-automated" ? "HIGH" : formData.decisions === "human-reviews" ? "MEDIUM" : "LOW";
+  const riskScore = riskLevel === "HIGH" ? 78 : riskLevel === "MEDIUM" ? 52 : 28;
+  
   return {
     id,
+    title: formData.usecase.slice(0, 50) + (formData.usecase.length > 50 ? "..." : ""),
     timestamp: new Date().toISOString(),
     input: formData,
-    summary: `This ${formData.industry.toLowerCase()} AI deployment targeting ${formData.users} users presents moderate regulatory exposure. The ${formData.decisions.replace("-", " ")} decision model combined with ${formData.data.join(", ")} data processing triggers several compliance frameworks.`,
-    riskScore: formData.decisions === "fully-automated" ? "High" : formData.decisions === "human-reviews" ? "Medium" : "Low",
-    frameworkFlags: [
-      { name: "EU AI Act", status: formData.decisions === "fully-automated" ? "High-Risk" : "Limited Risk", description: "Article 6 classification based on decision autonomy and sector" },
-      { name: "GDPR", status: formData.data.includes("personal") || formData.data.includes("biometric") ? "Applicable" : "Limited", description: "Data processing requirements for personal data" },
-      { name: "NIST AI RMF", status: "Recommended", description: "Voluntary framework for AI risk management" },
-      { name: "ISO 42001", status: "Advisory", description: "AI management system standard" },
+    summary: `This ${formData.industry.toLowerCase()} AI deployment targeting ${formData.users} users presents ${riskLevel.toLowerCase()} regulatory exposure. The ${formData.decisions.replace("-", " ")} decision model combined with ${formData.data.join(", ")} data processing triggers several compliance frameworks.`,
+    overallRisk: riskLevel as "HIGH" | "MEDIUM" | "LOW",
+    riskScore,
+    flags: [
+      { severity: (formData.decisions === "fully-automated" ? "HIGH" : "MEDIUM") as "HIGH" | "MEDIUM" | "LOW", framework: "EU AI Act", issue: "High-Risk Classification", description: "Article 6 classification based on decision autonomy and sector" },
+      { severity: (formData.data.includes("personal") || formData.data.includes("biometric") ? "HIGH" : "LOW") as "HIGH" | "MEDIUM" | "LOW", framework: "GDPR", issue: "Data Processing Requirements", description: "Data processing requirements for personal data" },
+      { severity: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW", framework: "NIST AI RMF", issue: "Risk Management Framework", description: "Voluntary framework for AI risk management recommended" },
+      { severity: "LOW" as "HIGH" | "MEDIUM" | "LOW", framework: "ISO 42001", issue: "Management System Standard", description: "AI management system standard advisory" },
     ],
     regulations: [
-      { jurisdiction: "European Union", regulation: "EU AI Act", requirement: "Risk assessment and conformity documentation required", deadline: "August 2025" },
-      { jurisdiction: "United States", regulation: "State AI Laws", requirement: "Disclosure requirements vary by state", deadline: "Ongoing" },
-      { jurisdiction: "United Kingdom", regulation: "AI Safety Framework", requirement: "Sector-specific guidance compliance", deadline: "2025" },
+      { name: "EU AI Act", relevance: "European Union", requirement: "Risk assessment and conformity documentation required by August 2025" },
+      { name: "State AI Laws", relevance: "United States", requirement: "Disclosure requirements vary by state - ongoing compliance needed" },
+      { name: "AI Safety Framework", relevance: "United Kingdom", requirement: "Sector-specific guidance compliance required by 2025" },
     ],
-    controls: [
-      { category: "Governance", control: "Establish AI ethics review board", priority: "High" },
-      { category: "Governance", control: "Document model decision logic", priority: "High" },
-      { category: "Technical", control: "Implement model monitoring and drift detection", priority: "Medium" },
-      { category: "Technical", control: "Create audit logging for all AI decisions", priority: "High" },
-      { category: "Operational", control: "Define human override procedures", priority: "High" },
-      { category: "Operational", control: "Establish incident response plan", priority: "Medium" },
+    controlIdeas: [
+      { control: "AI Ethics Review Board", description: "Establish governance oversight for AI deployment decisions", priority: "HIGH" as "HIGH" | "MEDIUM" | "LOW" },
+      { control: "Model Decision Documentation", description: "Document model decision logic for transparency and auditing", priority: "HIGH" as "HIGH" | "MEDIUM" | "LOW" },
+      { control: "Model Monitoring System", description: "Implement model monitoring and drift detection", priority: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW" },
+      { control: "Audit Logging", description: "Create audit logging for all AI decisions", priority: "HIGH" as "HIGH" | "MEDIUM" | "LOW" },
+      { control: "Human Override Procedures", description: "Define human override procedures for automated decisions", priority: "HIGH" as "HIGH" | "MEDIUM" | "LOW" },
+      { control: "Incident Response Plan", description: "Establish incident response plan for AI failures", priority: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW" },
     ],
-    requirements: [
-      { category: "Documentation", items: ["Model cards", "Data sheets", "Risk assessment report", "Conformity declaration"] },
-      { category: "Technical Implementation", items: ["Explainability module", "Bias testing pipeline", "Performance monitoring dashboard"] },
-      { category: "Process", items: ["Human oversight workflow", "Feedback collection mechanism", "Regular model revalidation schedule"] },
+    engineeringRequirements: [
+      { category: "Documentation", requirement: "Model Cards", rationale: "Required for transparency and regulatory compliance" },
+      { category: "Documentation", requirement: "Data Sheets", rationale: "Document data sources, processing, and lineage" },
+      { category: "Documentation", requirement: "Risk Assessment Report", rationale: "Formal risk documentation for compliance" },
+      { category: "Technical", requirement: "Explainability Module", rationale: "Enable interpretation of model decisions" },
+      { category: "Technical", requirement: "Bias Testing Pipeline", rationale: "Detect and mitigate algorithmic bias" },
+      { category: "Technical", requirement: "Performance Monitoring Dashboard", rationale: "Real-time visibility into model behavior" },
+      { category: "Process", requirement: "Human Oversight Workflow", rationale: "Ensure human-in-the-loop for critical decisions" },
+      { category: "Process", requirement: "Feedback Collection Mechanism", rationale: "Gather user feedback for continuous improvement" },
     ],
-    knowledgeBase: [
-      { title: "EU AI Act Compliance Guide", filename: "eu-ai-act-guide.pdf", size: "2.4 MB" },
-      { title: "Risk Assessment Template", filename: "risk-assessment-template.xlsx", size: "156 KB" },
-      { title: "Model Documentation Framework", filename: "model-docs-framework.pdf", size: "1.1 MB" },
+    knowledgeBaseFiles: [
+      { filename: "eu-ai-act-guide.md", title: "EU AI Act Compliance Guide", content: "# EU AI Act Compliance Guide\n\nThis document outlines the key requirements for compliance with the EU AI Act...\n\n## Risk Classification\n\nYour deployment has been classified as " + riskLevel + " risk based on the assessment criteria." },
+      { filename: "risk-assessment-template.md", title: "Risk Assessment Template", content: "# Risk Assessment Template\n\n## Overview\n\nUse this template to document your AI risk assessment...\n\n## Risk Score: " + riskScore + "/100" },
+      { filename: "model-docs-framework.md", title: "Model Documentation Framework", content: "# Model Documentation Framework\n\n## Purpose\n\nThis framework provides guidance for documenting AI models..." },
     ],
   };
 }
@@ -191,14 +201,18 @@ export default function AssessPage() {
           </p>
         </div>
 
-        {step > 1 && (
-          <button
-            onClick={handleBack}
-            className="absolute top-8 left-8 p-2 text-neutral-400 hover:text-neutral-900 transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-        )}
+        <button
+          onClick={() => {
+            if (step > 1) {
+              handleBack();
+            } else {
+              router.push("/");
+            }
+          }}
+          className="absolute top-8 left-8 p-2 text-neutral-400 hover:text-neutral-900 transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
 
         <AnimatePresence mode="wait">
           <motion.div
