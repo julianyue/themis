@@ -51,7 +51,7 @@ Generate 3-6 flags, 2-4 regulations, 4-6 control ideas, 4-8 engineering requirem
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 2000,
+      max_tokens: 6000,
       messages: [
         {
           role: "user",
@@ -64,7 +64,12 @@ Generate 3-6 flags, 2-4 regulations, 4-6 control ideas, 4-8 engineering requirem
     
     let assessment;
     try {
-      assessment = JSON.parse(responseText);
+   const cleaned = responseText
+  .replace(/```json\n?/g, '')
+  .replace(/```\n?/g, '')
+  .trim();
+
+assessment = JSON.parse(cleaned);
     } catch {
       console.error("Failed to parse AI response:", responseText);
       return NextResponse.json(
@@ -83,7 +88,7 @@ Generate 3-6 flags, 2-4 regulations, 4-6 control ideas, 4-8 engineering requirem
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Assessment error:", error);
+   console.error("Assessment error:", error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: "Assessment failed" },
       { status: 500 }
