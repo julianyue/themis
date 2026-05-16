@@ -32,7 +32,7 @@ This is also a personal project at the intersection of my background in GRC and 
 - Next.js + TypeScript
 - Tailwind CSS + shadcn/ui
 - Framer Motion
-- Anthropic Claude API (`claude-sonnet-4-20250514`)
+- Anthropic Claude API (`claude-sonnet-4-6`)
 
 ---
 
