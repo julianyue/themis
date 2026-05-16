@@ -184,23 +184,37 @@ export default function AssessPage() {
   };
 
   const handleSubmit = async () => {
-    setIsLoading(true);
-    
-    const interval = setInterval(() => {
-      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
-    }, 800);
+  setIsLoading(true);
 
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    
-    const assessment = generateSampleAssessment(formData);
-    const existingAssessments = JSON.parse(localStorage.getItem("themis-assessments") || "{}");
+  const interval = setInterval(() => {
+    setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+  }, 800);
+
+  try {
+    const response = await fetch("/api/assess", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) throw new Error("Assessment failed");
+
+    const assessment = await response.json();
+
+    const existingAssessments = JSON.parse(
+      localStorage.getItem("themis-assessments") || "{}"
+    );
     existingAssessments[assessment.id] = assessment;
     localStorage.setItem("themis-assessments", JSON.stringify(existingAssessments));
-    
+
     clearInterval(interval);
     router.push(`/dashboard?id=${assessment.id}`);
-  };
+  } catch (error) {
+    console.error("Assessment error:", error);
+    clearInterval(interval);
+    setIsLoading(false);
+  }
+};
 
   const canProceed = () => {
     switch (step) {

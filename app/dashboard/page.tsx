@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   AlertCircle,
   CheckCircle,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,14 +35,8 @@ interface Assessment {
     severity: "HIGH" | "MEDIUM" | "LOW";
     framework: string;
     issue: string;
-    description: string;
-    sections: Array<{
-      id: string;
-      title: string;
-      summary: string;
-      implication: string;
-      reference?: string;
-    }>;
+    detail?: string;
+    description?: string;
   }>;
   regulations: Array<{
     name: string;
@@ -131,35 +124,30 @@ function FrameworkTag({ framework }: { framework: string }) {
   );
 }
 
-function ExpandableFlag({ flag }: { 
+function ExpandableFlag({ flag }: {
   flag: {
     severity: "HIGH" | "MEDIUM" | "LOW";
     framework: string;
     issue: string;
-    description: string;
-    sections: Array<{
-      id: string;
-      title: string;
-      summary: string;
-      implication: string;
-      reference?: string;
-    }>;
+    detail?: string;
+    description?: string;
   }
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+  const expandedText = flag.detail || flag.description || null;
+
   const handleClick = () => {
-    setIsExpanded(prev => !prev);
+    if (expandedText) setIsExpanded(prev => !prev);
   };
-  
+
   return (
     <Card className="border-neutral-200 overflow-hidden">
       <div
         onClick={handleClick}
-        className="w-full text-left cursor-pointer"
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
+        className={`w-full text-left ${expandedText ? "cursor-pointer" : ""}`}
+        role={expandedText ? "button" : undefined}
+        tabIndex={expandedText ? 0 : undefined}
+        onKeyDown={(e) => { if (expandedText && (e.key === 'Enter' || e.key === ' ')) handleClick(); }}
       >
         <CardContent className="pt-4 pb-4">
           <div className="flex items-center justify-between">
@@ -169,47 +157,19 @@ function ExpandableFlag({ flag }: {
                 <FrameworkTag framework={flag.framework} />
               </div>
               <h3 className="font-medium text-neutral-900 mb-1">{flag.issue}</h3>
-              <p className="text-sm text-neutral-600">{flag.description}</p>
             </div>
-            <ChevronDown 
-              className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ml-4 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
-            />
+            {expandedText && (
+              <ChevronDown
+                className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ml-4 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
+              />
+            )}
           </div>
         </CardContent>
       </div>
-      
-      {isExpanded && flag.sections && (
+
+      {isExpanded && expandedText && (
         <div className="border-t border-neutral-200 bg-neutral-50 px-6 py-4">
-          <p className="text-xs font-mono text-neutral-500 uppercase tracking-wider mb-4">Relevant Sections</p>
-          <div className="space-y-4">
-            {flag.sections.map((section) => (
-              <div key={section.id} className="bg-white rounded-lg border border-neutral-200 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-neutral-900 mb-2">{section.title}</h4>
-                    <p className="text-sm text-neutral-600 mb-3">{section.summary}</p>
-                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
-                      <p className="text-sm text-amber-900">
-                        <span className="font-medium">Implication: </span>
-                        {section.implication}
-                      </p>
-                    </div>
-                  </div>
-                  {section.reference && (
-                    <a
-                      href={section.reference}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-shrink-0 p-2 text-neutral-400 hover:text-neutral-700 transition-colors"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-neutral-700 leading-relaxed">{expandedText}</p>
         </div>
       )}
     </Card>
@@ -241,18 +201,15 @@ function DashboardContent() {
   useEffect(() => {
     const stored = localStorage.getItem("themis-assessments");
     if (stored) {
-      const parsed = JSON.parse(stored);
-      // Filter out assessments that don't have the required fields (old schema)
+      const parsed: Record<string, Assessment> = JSON.parse(stored);
       const validAssessments: Record<string, Assessment> = {};
       for (const [id, assessment] of Object.entries(parsed)) {
-        const a = assessment as Assessment;
-        // Check for new schema with sections in flags
-        if (a.engineeringRequirements && a.flags && a.controlIdeas && a.flags[0]?.sections) {
-          validAssessments[id] = a;
+        if (assessment.engineeringRequirements && assessment.flags && assessment.controlIdeas) {
+          validAssessments[id] = assessment;
         }
       }
       setAssessments(validAssessments);
-      
+
       const urlId = searchParams.get("id");
       if (urlId && validAssessments[urlId]) {
         setSelectedId(urlId);
@@ -281,17 +238,16 @@ function DashboardContent() {
   };
 
   const groupedRequirements = selectedAssessment?.engineeringRequirements?.reduce(
-    (acc, req) => {
+    (acc: Record<string, Array<{ category: string; requirement: string; rationale: string }>>, req) => {
       if (!acc[req.category]) acc[req.category] = [];
       acc[req.category].push(req);
       return acc;
     },
-    {} as Record<string, Array<{ category: string; requirement: string; rationale: string }>>
+    {}
   ) ?? {};
 
   return (
     <div className="flex min-h-screen bg-white">
-      {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-full bg-white border-r border-neutral-200 transition-all duration-300 z-20 ${
           sidebarCollapsed ? "w-16" : "w-72"
@@ -356,7 +312,6 @@ function DashboardContent() {
         </div>
       </aside>
 
-      {/* Main content */}
       <main
         className={`flex-1 transition-all duration-300 ${
           sidebarCollapsed ? "ml-16" : "ml-72"
@@ -381,7 +336,6 @@ function DashboardContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Header */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -400,7 +354,6 @@ function DashboardContent() {
                 </div>
               </motion.div>
 
-              {/* Summary */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -416,7 +369,6 @@ function DashboardContent() {
                 </Card>
               </motion.div>
 
-              {/* Framework Flags */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -430,7 +382,6 @@ function DashboardContent() {
                 </div>
               </motion.div>
 
-              {/* Regulations */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -448,7 +399,6 @@ function DashboardContent() {
                 </div>
               </motion.div>
 
-              {/* Control Ideas */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -470,7 +420,6 @@ function DashboardContent() {
                 </div>
               </motion.div>
 
-              {/* Engineering Requirements */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -478,29 +427,24 @@ function DashboardContent() {
               >
                 <h2 className="text-xl font-semibold text-neutral-900 mb-4">Engineering Requirements</h2>
                 <div className="space-y-6 mb-8">
-                  {groupedRequirements &&
-                    Object.entries(groupedRequirements).map(([category, reqs]) => (
-                      <div key={category}>
-                        <h3 className="font-mono text-sm font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                          {category}
-                        </h3>
-                        <div className="space-y-3">
-                          {reqs.map((req, index) => (
-                            <div
-                              key={index}
-                              className="p-4 rounded-lg border border-neutral-200 bg-white"
-                            >
-                              <p className="font-medium text-neutral-900 mb-1">{req.requirement}</p>
-                              <p className="text-sm text-neutral-500">{req.rationale}</p>
-                            </div>
-                          ))}
-                        </div>
+                  {Object.entries(groupedRequirements).map(([category, reqs]) => (
+                    <div key={category}>
+                      <h3 className="font-mono text-sm font-medium text-neutral-500 uppercase tracking-wider mb-3">
+                        {category}
+                      </h3>
+                      <div className="space-y-3">
+                        {reqs.map((req, index) => (
+                          <div key={index} className="p-4 rounded-lg border border-neutral-200 bg-white">
+                            <p className="font-medium text-neutral-900 mb-1">{req.requirement}</p>
+                            <p className="text-sm text-neutral-500">{req.rationale}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </motion.div>
 
-              {/* Knowledge Base Files */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

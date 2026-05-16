@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
+export const maxDuration = 60;
+
 function generateId() {
   return `assess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
@@ -23,6 +25,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("API KEY:", process.env.ANTHROPIC_API_KEY ? "found" : "missing");
+
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
@@ -44,14 +48,14 @@ Return ONLY valid JSON, no markdown, no preamble:
   "regulations": [{ "name": "<regulation>", "relevance": "<why it applies>", "requirement": "<what is required>" }],
   "controlIdeas": [{ "control": "<title>", "description": "<what it does>", "priority": "HIGH"|"MEDIUM"|"LOW" }],
   "engineeringRequirements": [{ "category": "<Logging|Access Control|Human Oversight|Data Governance|Model Monitoring|Explainability|Security>", "requirement": "<specific requirement>", "rationale": "<why>" }],
-  "knowledgeBaseFiles": [{ "filename": "<kebab-case.md>", "title": "<title>", "content": "<full markdown ready for RAG>" }]
+  "knowledgeBaseFiles": [{ "filename": "<kebab-case.md>", "title": "<title>", "content": "<2-3 paragraph markdown summary ready for RAG>" }]
 }
 
-Generate 3-6 flags, 2-4 regulations, 4-6 control ideas, 4-8 engineering requirements, 2-3 knowledge base files.`;
+Generate 3-5 flags, 2-3 regulations, 3-5 control ideas, 4-6 engineering requirements, 1-2 knowledge base files. Keep responses concise.`;
 
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 6000,
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
       messages: [
         {
           role: "user",
@@ -60,16 +64,18 @@ Generate 3-6 flags, 2-4 regulations, 4-6 control ideas, 4-8 engineering requirem
       ],
     });
 
+    console.log("Raw response:", message.content[0].type === "text" ? message.content[0].text.substring(0, 500) : "no text");
+
     const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-    
+
     let assessment;
     try {
-   const cleaned = responseText
-  .replace(/```json\n?/g, '')
-  .replace(/```\n?/g, '')
-  .trim();
+      const cleaned = responseText
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
 
-assessment = JSON.parse(cleaned);
+      assessment = JSON.parse(cleaned);
     } catch {
       console.error("Failed to parse AI response:", responseText);
       return NextResponse.json(
@@ -88,7 +94,7 @@ assessment = JSON.parse(cleaned);
 
     return NextResponse.json(result);
   } catch (error) {
-   console.error("Assessment error:", error instanceof Error ? error.message : error);
+    console.error("Assessment error:", error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: "Assessment failed" },
       { status: 500 }
