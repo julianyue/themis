@@ -75,10 +75,54 @@ function generateSampleAssessment(formData: {
     overallRisk: riskLevel as "HIGH" | "MEDIUM" | "LOW",
     riskScore,
     flags: [
-      { severity: (formData.decisions === "fully-automated" ? "HIGH" : "MEDIUM") as "HIGH" | "MEDIUM" | "LOW", framework: "EU AI Act", issue: "High-Risk Classification", description: "Article 6 classification based on decision autonomy and sector" },
-      { severity: (formData.data.includes("personal") || formData.data.includes("biometric") ? "HIGH" : "LOW") as "HIGH" | "MEDIUM" | "LOW", framework: "GDPR", issue: "Data Processing Requirements", description: "Data processing requirements for personal data" },
-      { severity: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW", framework: "NIST AI RMF", issue: "Risk Management Framework", description: "Voluntary framework for AI risk management recommended" },
-      { severity: "LOW" as "HIGH" | "MEDIUM" | "LOW", framework: "ISO 42001", issue: "Management System Standard", description: "AI management system standard advisory" },
+      { 
+        severity: (formData.decisions === "fully-automated" ? "HIGH" : "MEDIUM") as "HIGH" | "MEDIUM" | "LOW", 
+        framework: "EU AI Act", 
+        issue: "High-Risk Classification", 
+        description: "Article 6 classification based on decision autonomy and sector",
+        sections: [
+          { id: "art-6", title: "Article 6 - Classification Rules", summary: "Systems that make or substantially influence decisions affecting natural persons in high-risk domains.", implication: "Requires conformity assessment, CE marking, and registration in EU database before deployment.", reference: "https://eur-lex.europa.eu/eli/reg/2024/1689" },
+          { id: "art-9", title: "Article 9 - Risk Management System", summary: "Mandatory establishment of a risk management system throughout the AI system lifecycle.", implication: "Must implement continuous risk identification, estimation, evaluation, and mitigation processes.", reference: "https://eur-lex.europa.eu/eli/reg/2024/1689" },
+          { id: "art-13", title: "Article 13 - Transparency", summary: "High-risk AI systems must be designed to allow users to interpret and use outputs appropriately.", implication: "Requires clear documentation of system capabilities, limitations, and intended use.", reference: "https://eur-lex.europa.eu/eli/reg/2024/1689" },
+          { id: "art-14", title: "Article 14 - Human Oversight", summary: "Systems must allow effective human oversight during use.", implication: "Must enable human operators to understand, monitor, and override AI decisions.", reference: "https://eur-lex.europa.eu/eli/reg/2024/1689" },
+        ]
+      },
+      { 
+        severity: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW", 
+        framework: "NIST AI RMF", 
+        issue: "Risk Management Framework", 
+        description: "Voluntary framework for AI risk management recommended",
+        sections: [
+          { id: "govern", title: "GOVERN Function", summary: "Cultivate a culture of risk management within organizations that design, develop, deploy, or use AI.", implication: "Establish AI governance policies, roles, and accountability structures.", reference: "https://www.nist.gov/itl/ai-risk-management-framework" },
+          { id: "map", title: "MAP Function", summary: "Context is recognized and risks related to context are identified.", implication: "Document intended use, user groups, and potential negative impacts systematically.", reference: "https://www.nist.gov/itl/ai-risk-management-framework" },
+          { id: "measure", title: "MEASURE Function", summary: "Identified risks are assessed, analyzed, or tracked.", implication: "Implement metrics and monitoring for bias, fairness, reliability, and safety.", reference: "https://www.nist.gov/itl/ai-risk-management-framework" },
+          { id: "manage", title: "MANAGE Function", summary: "Risks are prioritized and acted upon based on projected impact.", implication: "Develop response plans and allocate resources for risk treatment.", reference: "https://www.nist.gov/itl/ai-risk-management-framework" },
+        ]
+      },
+      { 
+        severity: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW", 
+        framework: "Anthropic Guidelines", 
+        issue: "Responsible Scaling Policy", 
+        description: "Best practices for safe AI deployment and capability assessment",
+        sections: [
+          { id: "asl", title: "AI Safety Levels (ASL)", summary: "Tiered safety requirements based on model capabilities and potential risks.", implication: "Assess your deployment against capability thresholds and implement corresponding safeguards.", reference: "https://www.anthropic.com/news/anthropics-responsible-scaling-policy" },
+          { id: "eval", title: "Capability Evaluations", summary: "Regular assessment of AI capabilities to identify potential dangerous behaviors.", implication: "Implement red-teaming and adversarial testing before and after deployment.", reference: "https://www.anthropic.com/news/anthropics-responsible-scaling-policy" },
+          { id: "deploy", title: "Deployment Safeguards", summary: "Graduated deployment with monitoring and rollback capabilities.", implication: "Start with limited deployment, monitor for misuse, and maintain ability to restrict access.", reference: "https://www.anthropic.com/news/anthropics-responsible-scaling-policy" },
+          { id: "oversight", title: "Human Oversight Requirements", summary: "Ensure meaningful human control over AI system decisions and actions.", implication: "Design systems that support human review and intervention at critical decision points.", reference: "https://www.anthropic.com/news/anthropics-responsible-scaling-policy" },
+        ]
+      },
+      { 
+        severity: "LOW" as "HIGH" | "MEDIUM" | "LOW", 
+        framework: "ISO 42001", 
+        issue: "Management System Standard", 
+        description: "AI management system standard advisory",
+        sections: [
+          { id: "4-context", title: "Clause 4 - Context of Organization", summary: "Understanding the organization and its context for AI management.", implication: "Document stakeholder needs, scope of AI activities, and external/internal issues.", reference: "https://www.iso.org/standard/81230.html" },
+          { id: "5-leadership", title: "Clause 5 - Leadership", summary: "Top management commitment and AI policy establishment.", implication: "Establish AI policy, assign responsibilities, and ensure adequate resources.", reference: "https://www.iso.org/standard/81230.html" },
+          { id: "6-planning", title: "Clause 6 - Planning", summary: "Actions to address risks and opportunities, AI objectives.", implication: "Plan risk treatments, set measurable AI objectives, and plan changes systematically.", reference: "https://www.iso.org/standard/81230.html" },
+          { id: "9-evaluation", title: "Clause 9 - Performance Evaluation", summary: "Monitoring, measurement, analysis, and evaluation of the AI management system.", implication: "Conduct internal audits and management reviews of AI governance effectiveness.", reference: "https://www.iso.org/standard/81230.html" },
+        ]
+      },
     ],
     regulations: [
       { name: "EU AI Act", relevance: "European Union", requirement: "Risk assessment and conformity documentation required by August 2025" },

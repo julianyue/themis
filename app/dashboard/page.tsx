@@ -7,11 +7,13 @@ import { useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Plus,
   Download,
   AlertTriangle,
   AlertCircle,
   CheckCircle,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +37,13 @@ interface Assessment {
     framework: string;
     issue: string;
     description: string;
+    sections: Array<{
+      id: string;
+      title: string;
+      summary: string;
+      implication: string;
+      reference?: string;
+    }>;
   }>;
   regulations: Array<{
     name: string;
@@ -119,6 +128,84 @@ function FrameworkTag({ framework }: { framework: string }) {
     <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-600 text-xs font-mono">
       {framework}
     </span>
+  );
+}
+
+function ExpandableFlag({ flag }: { 
+  flag: {
+    severity: "HIGH" | "MEDIUM" | "LOW";
+    framework: string;
+    issue: string;
+    description: string;
+    sections: Array<{
+      id: string;
+      title: string;
+      summary: string;
+      implication: string;
+      reference?: string;
+    }>;
+  }
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <Card className="border-neutral-200 overflow-hidden">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left"
+      >
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <SeverityBadge severity={flag.severity} />
+                <FrameworkTag framework={flag.framework} />
+              </div>
+              <h3 className="font-medium text-neutral-900 mb-1">{flag.issue}</h3>
+              <p className="text-sm text-neutral-600">{flag.description}</p>
+            </div>
+            <ChevronDown 
+              className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ml-4 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
+            />
+          </div>
+        </CardContent>
+      </button>
+      
+      {isExpanded && flag.sections && (
+        <div className="border-t border-neutral-200 bg-neutral-50 px-6 py-4">
+          <p className="text-xs font-mono text-neutral-500 uppercase tracking-wider mb-4">Relevant Sections</p>
+          <div className="space-y-4">
+            {flag.sections.map((section) => (
+              <div key={section.id} className="bg-white rounded-lg border border-neutral-200 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-neutral-900 mb-2">{section.title}</h4>
+                    <p className="text-sm text-neutral-600 mb-3">{section.summary}</p>
+                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                      <p className="text-sm text-amber-900">
+                        <span className="font-medium">Implication: </span>
+                        {section.implication}
+                      </p>
+                    </div>
+                  </div>
+                  {section.reference && (
+                    <a
+                      href={section.reference}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 p-2 text-neutral-400 hover:text-neutral-700 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -328,18 +415,9 @@ function DashboardContent() {
                 transition={{ delay: 0.3 }}
               >
                 <h2 className="text-xl font-semibold text-neutral-900 mb-4">Framework Flags</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="space-y-4 mb-8">
                   {selectedAssessment.flags.map((flag, index) => (
-                    <Card key={index} className="border-neutral-200">
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <SeverityBadge severity={flag.severity} />
-                          <FrameworkTag framework={flag.framework} />
-                        </div>
-                        <h3 className="font-medium text-neutral-900 mb-1">{flag.issue}</h3>
-                        <p className="text-sm text-neutral-600">{flag.description}</p>
-                      </CardContent>
-                    </Card>
+                    <ExpandableFlag key={index} flag={flag} />
                   ))}
                 </div>
               </motion.div>
