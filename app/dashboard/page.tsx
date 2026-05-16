@@ -148,13 +148,21 @@ function DashboardContent() {
     const stored = localStorage.getItem("themis-assessments");
     if (stored) {
       const parsed = JSON.parse(stored);
-      setAssessments(parsed);
+      // Filter out assessments that don't have the required fields (old schema)
+      const validAssessments: Record<string, Assessment> = {};
+      for (const [id, assessment] of Object.entries(parsed)) {
+        const a = assessment as Assessment;
+        if (a.engineeringRequirements && a.flags && a.controlIdeas) {
+          validAssessments[id] = a;
+        }
+      }
+      setAssessments(validAssessments);
       
       const urlId = searchParams.get("id");
-      if (urlId && parsed[urlId]) {
+      if (urlId && validAssessments[urlId]) {
         setSelectedId(urlId);
       } else {
-        const ids = Object.keys(parsed);
+        const ids = Object.keys(validAssessments);
         if (ids.length > 0) {
           setSelectedId(ids[ids.length - 1]);
         }
@@ -177,14 +185,14 @@ function DashboardContent() {
     URL.revokeObjectURL(url);
   };
 
-  const groupedRequirements = selectedAssessment?.engineeringRequirements.reduce(
+  const groupedRequirements = selectedAssessment?.engineeringRequirements?.reduce(
     (acc, req) => {
       if (!acc[req.category]) acc[req.category] = [];
       acc[req.category].push(req);
       return acc;
     },
-    {} as Record<string, typeof selectedAssessment.engineeringRequirements>
-  );
+    {} as Record<string, Array<{ category: string; requirement: string; rationale: string }>>
+  ) ?? {};
 
   return (
     <div className="flex min-h-screen bg-white">
