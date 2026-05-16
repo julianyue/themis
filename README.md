@@ -1,6 +1,6 @@
 # Themis
 
-**Live demo:** https://v0-themis-2oql9fyes-julians-projects-88b4abf6.vercel.app/
+**Live demo:** https://v0-themis-three.vercel.app/
 
 AI moves fast. Themis keeps it accountable.
 
