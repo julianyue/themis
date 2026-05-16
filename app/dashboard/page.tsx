@@ -148,11 +148,18 @@ function ExpandableFlag({ flag }: {
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  const handleClick = () => {
+    setIsExpanded(prev => !prev);
+  };
+  
   return (
     <Card className="border-neutral-200 overflow-hidden">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left"
+      <div
+        onClick={handleClick}
+        className="w-full text-left cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
       >
         <CardContent className="pt-4 pb-4">
           <div className="flex items-center justify-between">
@@ -169,7 +176,7 @@ function ExpandableFlag({ flag }: {
             />
           </div>
         </CardContent>
-      </button>
+      </div>
       
       {isExpanded && flag.sections && (
         <div className="border-t border-neutral-200 bg-neutral-50 px-6 py-4">
@@ -239,7 +246,8 @@ function DashboardContent() {
       const validAssessments: Record<string, Assessment> = {};
       for (const [id, assessment] of Object.entries(parsed)) {
         const a = assessment as Assessment;
-        if (a.engineeringRequirements && a.flags && a.controlIdeas) {
+        // Check for new schema with sections in flags
+        if (a.engineeringRequirements && a.flags && a.controlIdeas && a.flags[0]?.sections) {
           validAssessments[id] = a;
         }
       }
