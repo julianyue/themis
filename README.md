@@ -1,5 +1,7 @@
 # Themis
 
+**Live demo:** https://v0-themis-2oql9fyes-julians-projects-88b4abf6.vercel.app/
+
 AI moves fast. Themis keeps it accountable.
 
 Themis is an AI deployment risk assessment tool that takes your idea and stress tests it against the frameworks that matter; EU AI Act, NIST AI RMF, ISO 42001, and Anthropic's own safety guidelines. Describe what you're building, answer a few questions, and get back a full risk profile: flagged violations, applicable regulations, control recommendations, engineering requirements, and knowledge base files ready to drop into a RAG pipeline.
