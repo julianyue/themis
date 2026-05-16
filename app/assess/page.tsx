@@ -14,52 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 36 }, (_, i) => ({
-    id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${
-      380 - i * 5 * position
-    } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${
-      152 - i * 5 * position
-    } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${
-      684 - i * 5 * position
-    } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    width: 0.5 + i * 0.03,
-  }));
-
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      <svg
-        className="w-full h-full text-slate-950 dark:text-white"
-        viewBox="0 0 696 316"
-        fill="none"
-      >
-        <title>Background Paths</title>
-        {paths.map((path) => (
-          <motion.path
-            key={path.id}
-            d={path.d}
-            stroke="currentColor"
-            strokeWidth={path.width}
-            strokeOpacity={0.1 + path.id * 0.03}
-            initial={{ pathLength: 0.3, opacity: 0.6 }}
-            animate={{
-              pathLength: 1,
-              opacity: [0.3, 0.6, 0.3],
-              pathOffset: [0, 1, 0],
-            }}
-            transition={{
-              duration: 20 + Math.random() * 10,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
-            }}
-          />
-        ))}
-      </svg>
-    </div>
-  );
-}
-
 const userOptions = [
   { value: "internal", label: "Internal team", description: "Used by employees within your organization" },
   { value: "customers", label: "Customers", description: "Deployed to paying customers or users" },
@@ -101,6 +55,52 @@ const loadingMessages = [
   "Compiling output...",
 ];
 
+function generateSampleAssessment(formData: {
+  usecase: string;
+  users: string;
+  industry: string;
+  decisions: string;
+  data: string[];
+}) {
+  const id = `assessment-${Date.now()}`;
+  return {
+    id,
+    timestamp: new Date().toISOString(),
+    input: formData,
+    summary: `This ${formData.industry.toLowerCase()} AI deployment targeting ${formData.users} users presents moderate regulatory exposure. The ${formData.decisions.replace("-", " ")} decision model combined with ${formData.data.join(", ")} data processing triggers several compliance frameworks.`,
+    riskScore: formData.decisions === "fully-automated" ? "High" : formData.decisions === "human-reviews" ? "Medium" : "Low",
+    frameworkFlags: [
+      { name: "EU AI Act", status: formData.decisions === "fully-automated" ? "High-Risk" : "Limited Risk", description: "Article 6 classification based on decision autonomy and sector" },
+      { name: "GDPR", status: formData.data.includes("personal") || formData.data.includes("biometric") ? "Applicable" : "Limited", description: "Data processing requirements for personal data" },
+      { name: "NIST AI RMF", status: "Recommended", description: "Voluntary framework for AI risk management" },
+      { name: "ISO 42001", status: "Advisory", description: "AI management system standard" },
+    ],
+    regulations: [
+      { jurisdiction: "European Union", regulation: "EU AI Act", requirement: "Risk assessment and conformity documentation required", deadline: "August 2025" },
+      { jurisdiction: "United States", regulation: "State AI Laws", requirement: "Disclosure requirements vary by state", deadline: "Ongoing" },
+      { jurisdiction: "United Kingdom", regulation: "AI Safety Framework", requirement: "Sector-specific guidance compliance", deadline: "2025" },
+    ],
+    controls: [
+      { category: "Governance", control: "Establish AI ethics review board", priority: "High" },
+      { category: "Governance", control: "Document model decision logic", priority: "High" },
+      { category: "Technical", control: "Implement model monitoring and drift detection", priority: "Medium" },
+      { category: "Technical", control: "Create audit logging for all AI decisions", priority: "High" },
+      { category: "Operational", control: "Define human override procedures", priority: "High" },
+      { category: "Operational", control: "Establish incident response plan", priority: "Medium" },
+    ],
+    requirements: [
+      { category: "Documentation", items: ["Model cards", "Data sheets", "Risk assessment report", "Conformity declaration"] },
+      { category: "Technical Implementation", items: ["Explainability module", "Bias testing pipeline", "Performance monitoring dashboard"] },
+      { category: "Process", items: ["Human oversight workflow", "Feedback collection mechanism", "Regular model revalidation schedule"] },
+    ],
+    knowledgeBase: [
+      { title: "EU AI Act Compliance Guide", filename: "eu-ai-act-guide.pdf", size: "2.4 MB" },
+      { title: "Risk Assessment Template", filename: "risk-assessment-template.xlsx", size: "156 KB" },
+      { title: "Model Documentation Framework", filename: "model-docs-framework.pdf", size: "1.1 MB" },
+    ],
+  };
+}
+
 export default function AssessPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -134,37 +134,18 @@ export default function AssessPage() {
     
     const interval = setInterval(() => {
       setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
-    }, 2000);
+    }, 800);
 
-    try {
-      const response = await fetch("/api/assess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          usecase: formData.usecase,
-          users: formData.users,
-          industry: formData.industry,
-          decisions: formData.decisions,
-          data: formData.data.join(", "),
-        }),
-      });
-
-      if (response.ok) {
-        const assessment = await response.json();
-        const existingAssessments = JSON.parse(localStorage.getItem("themis-assessments") || "{}");
-        existingAssessments[assessment.id] = assessment;
-        localStorage.setItem("themis-assessments", JSON.stringify(existingAssessments));
-        router.push(`/dashboard?id=${assessment.id}`);
-      } else {
-        console.error("Assessment failed");
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setIsLoading(false);
-    } finally {
-      clearInterval(interval);
-    }
+    // Simulate processing time
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    
+    const assessment = generateSampleAssessment(formData);
+    const existingAssessments = JSON.parse(localStorage.getItem("themis-assessments") || "{}");
+    existingAssessments[assessment.id] = assessment;
+    localStorage.setItem("themis-assessments", JSON.stringify(existingAssessments));
+    
+    clearInterval(interval);
+    router.push(`/dashboard?id=${assessment.id}`);
   };
 
   const canProceed = () => {
@@ -180,15 +161,11 @@ export default function AssessPage() {
 
   if (isLoading) {
     return (
-      <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-white">
-        <div className="absolute inset-0">
-          <FloatingPaths position={1} />
-          <FloatingPaths position={-1} />
-        </div>
+      <div className="min-h-screen w-full flex items-center justify-center bg-white">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 text-center"
+          className="text-center"
         >
           <motion.p
             key={loadingMessageIndex}
@@ -205,13 +182,9 @@ export default function AssessPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-white">
-      <div className="absolute inset-0">
-        <FloatingPaths position={1} />
-        <FloatingPaths position={-1} />
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-white">
 
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+      <div className="w-full max-w-2xl mx-auto px-6">
         <div className="text-center mb-8">
           <p className="font-mono text-sm text-neutral-400">
             {String(step).padStart(2, "0")} / {String(totalSteps).padStart(2, "0")}
